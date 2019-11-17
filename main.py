@@ -1,5 +1,5 @@
 from __future__ import division
-from main import spot
+from spotify import spot
 
 import argparse
 
@@ -111,7 +111,7 @@ def sentiment(string):
 def main():
     os.system('clear')
     print("""\
-
+==================================================================================
 
                      /$$$$$$$  /$$                     /$$ /$$             /$$    
                     | $$__  $$| $$                    | $$|__/            | $$    
