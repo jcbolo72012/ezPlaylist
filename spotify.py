@@ -3,6 +3,7 @@ import spotipy.util as util
 import random
 
 def spot(x):
+    print("valence: " + str(x))
     token = util.prompt_for_user_token('bostonhacks', scope='playlist-modify-public', client_id='acee09a2147c4ba08136b74ac33ffd61', client_secret='98ec1927e041445397e039e55d690840', redirect_uri='https://localhost:8080')
     sp = spotipy.Spotify(auth=token)
 
