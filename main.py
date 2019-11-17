@@ -1,5 +1,5 @@
 from __future__ import division
-from main import spot
+from spotify import spot
 
 import argparse
 
