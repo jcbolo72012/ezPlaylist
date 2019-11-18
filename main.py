@@ -1,20 +1,15 @@
 from __future__ import division
 from spotify import spot
 
-import argparse
+import argparse, re, sys, os, pyaudio, webbrowser
 
 from google.cloud import language
 from google.cloud.language import enums as lang_enums
 from google.cloud.language import types as lang_types
 
-import re
-import sys
-import os
-
 from google.cloud import speech
 from google.cloud.speech import enums
 from google.cloud.speech import types
-import pyaudio
 from six.moves import queue
 
 RATE = 16000
@@ -71,6 +66,7 @@ class MicrophoneStream(object):
             yield b''.join(data)
 
 
+#built off of gcloud's quickstart method, listens until pause
 def listen_print_loop(responses):
     num_chars_printed = 0
     for response in responses:
@@ -82,26 +78,19 @@ def listen_print_loop(responses):
             continue
         transcript = result.alternatives[0].transcript
 
-        overwrite_chars = '' * (num_chars_printed - len(transcript))
-
-        if not result.is_final:
-            #sys.stdout.write(transcript + overwrite_chars + '\r')
+        if result.is_final:
             sys.stdout.flush()
-            num_chars_printed = len(transcript)
-        else:
-            #print(transcript + overwrite_chars)
+            #printing and returning user's statement
+            print('Creating playlist from: ' + transcript[0:len(transcript)] + "\n")
+            return(transcript)
+            break
 
-            if re.search(r'\b(exit|quit)\b', transcript, re.I):
-                print('Creating playlist from: ' + transcript[0:len(transcript)-5])
-                return(transcript)
-                break
-
-            num_chars_printed = 0
-
+#passing in user's statement, running against gcloud's sentiment analysis, then normalizing scale from 0-1 and returning
+#method also calls method that generates playlist from spotify.py file
 def sentiment(string):
     language_code = 'en-US'
     client = language.LanguageServiceClient()
-    string = string[0:len(string)-5]
+    string = string[0:len(string)]
     data = lang_types.Document(content=string,type=lang_enums.Document.Type.PLAIN_TEXT)
     sentiment = client.analyze_sentiment(document=data).document_sentiment
     score = round(sentiment.score,2)
@@ -126,7 +115,7 @@ def main():
                                              \______/
 ==================================================================================
 
-Please say a sentence, and end it with 'quit'.
+Tell me how you're feeling and I will do the the rest! - Make sure not to pause for too long, or I will think you are done!
 
     """)
     
@@ -148,10 +137,11 @@ Please say a sentence, and end it with 'quit'.
 
         responses = client.streaming_recognize(streaming_config, requests)
 
-        x = listen_print_loop(responses)
-        y = sentiment(x)
-        print("Your playlist: https://open.spotify.com/playlist/"+str(y)+'\n')
-        
+        #grabbing user's statement, and then passing into sentiment analysis
+        statement = listen_print_loop(responses)
+        #creating url from playlist id and opening in user's default web browser
+        url = "https://open.spotify.com/playlist/" + str(sentiment(statement))
+        webbrowser.open(url, new=0, autoraise = True)
 
 if __name__ == '__main__':
     main()
